@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using static Bullseye.Targets;
@@ -15,7 +16,10 @@ namespace Build
         static Task Main(string[] args)
         {
             var options = ParseOptions<Options>(args);
-
+            var sha = ReadShell("git rev-parse --short HEAD").TrimEnd(Environment.NewLine.ToCharArray());
+            
+            Info($"Sha: {sha}");
+            
             IPlatform platform = new Linux64Platform();
             
             Target("download", () =>
@@ -68,7 +72,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageDev(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev.tar.gz"));
+                platform.PackageDev(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"));
                 
                 if (DirectoryExists(ExpandPath("./tmp")))
                 {
@@ -76,7 +80,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageRuntime(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev.tar.gz"));
+                platform.PackageRuntime(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"));
             });
 
             Target("default", DependsOn("download", "extract", "package"));
