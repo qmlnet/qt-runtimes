@@ -20,7 +20,7 @@ namespace Build
             
             Info($"Sha: {sha}");
             
-            IPlatform platform = new Linux64Platform();
+            IPlatform platform = new OSX64Platform();
             
             Target("download", () =>
             {
@@ -45,10 +45,12 @@ namespace Build
             Target("extract", () =>
             {
                 var extractedDirectory = ExpandPath("./extracted");
-                if (!DirectoryExists(extractedDirectory))
+                if (DirectoryExists(extractedDirectory))
                 {
-                    Directory.CreateDirectory(extractedDirectory);
+                    DeleteDirectory(extractedDirectory);
                 }
+                Directory.CreateDirectory(extractedDirectory);
+                
                 foreach (var remoteFileUrl in platform.GetUrls())
                 {
                     var downloadedFilePath = Path.Combine(ExpandPath("./downloads"), Path.GetFileName(remoteFileUrl));
@@ -72,7 +74,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageDev(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"));
+                platform.PackageDev(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"));
                 
                 if (DirectoryExists(ExpandPath("./tmp")))
                 {
@@ -80,7 +82,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageRuntime(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"));
+                platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"));
             });
 
             Target("default", DependsOn("download", "extract", "package"));
