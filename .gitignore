@@ -344,3 +344,5 @@ healthchecksdb
 MigrationBackup/
 downloads/
 extracted/
+tmp/
+output/

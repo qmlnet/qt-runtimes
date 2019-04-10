@@ -21,9 +21,9 @@ namespace Build
     {
         static List<string> GetLinuxUrls()
         {
-            var baseUrl = "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122/qt.qt5.5122.gcc_64/";
+            var gccBase = "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122/qt.qt5.5122.gcc_64/";
 
-            return new List<string>
+            var urls = new List<string>
             {
                 "5.12.2-0-201903121858icu-linux-Rhel7.2-x64.7z",
                 "5.12.2-0-201903121858qt3d-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
@@ -53,7 +53,11 @@ namespace Build
                 "5.12.2-0-201903121858qtwebview-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
                 "5.12.2-0-201903121858qtx11extras-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
                 "5.12.2-0-201903121858qtxmlpatterns-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z"
-            }.Select(x => baseUrl + x).ToList();
+            }.Select(x => gccBase + x).ToList();
+            
+            urls.Add("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122/qt.qt5.5122.qtvirtualkeyboard.gcc_64/5.12.2-0-201903121858qtvirtualkeyboard-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z");
+
+            return urls;
         }
         
         static Task Main(string[] args)
@@ -96,8 +100,92 @@ namespace Build
                     RunShell($"cd \"{extractedDirectory}\" && 7za x {downloadedFilePath} -aoa");
                 }
             });
+            
+            Target("package", () =>
+            {
+                // Create the output directory.
+                var outputDirectory = ExpandPath("./output");
+                if (!DirectoryExists(outputDirectory))
+                {
+                    Directory.CreateDirectory(outputDirectory);
+                }
 
-            Target("default", DependsOn("download", "extract"));
+                // Create a temporary directory and copy all of our extracted files to it.
+                if (DirectoryExists(ExpandPath("./tmp")))
+                {
+                    DeleteDirectory(ExpandPath("./tmp"));
+                }
+                RunShell("cp -r ./extracted/5.12.2/gcc_64 ./tmp");
+                
+                // Create a complete backup for dev purposes.
+                RunShell("cd ./tmp && tar -cvzpf ../output/qt-5.12.2-linux-x64-dev.tar.gz *");
+                
+                // Clean up the tmp directory in prep for a runtime 
+                // First get a list of all dependencies from every .so files.
+                var linkedFiles = new List<string>();
+                foreach(var file in GetFiles(ExpandPath("./tmp"), pattern:"*.so*", recursive:true))
+                {
+                    var lddOutput = ReadShell($"ldd {file}");
+                    foreach (var _line in lddOutput.Split(Environment.NewLine))
+                    {
+                        var line = _line.TrimStart('\t').TrimStart('\n');
+                        var match = Regex.Match(line, @"(.*) =>.*");
+                        if (match.Success)
+                        {
+                            var linkedFile = match.Groups[1].Value;
+                            if(!linkedFiles.Contains(linkedFile))
+                            {
+                                linkedFiles.Add(linkedFile);
+                            }
+                        }
+                    }
+                }
+                
+                // Let's remove any file from lib/ that isn't linked against anything.
+                foreach(var file in GetFiles(ExpandPath("./tmp/lib"), recursive:true))
+                {
+                    var fileName = Path.GetFileName(file);
+                    if (!linkedFiles.Contains(fileName))
+                    {
+                        DeleteFile(file);
+                    }
+                }
+
+                foreach (var directory in GetDirecories(ExpandPath("./tmp"), recursive: true))
+                {
+                    if (!DirectoryExists(directory))
+                    {
+                        continue;
+                    }
+                    
+                    var directoryName = Path.GetFileName(directory);
+                    
+                    if (directoryName == "cmake")
+                    {
+                        DeleteDirectory(directory);
+                    }
+
+                    if (directoryName == "pkgconfig")
+                    {
+                        DeleteDirectory(directory);
+                    }
+                }
+                
+                foreach (var file in GetFiles(ExpandPath("./tmp"), recursive: true))
+                {
+                    var fileName = Path.GetFileName(file);
+                    var fileExtension = Path.GetExtension(fileName);
+                    
+                    if (fileExtension == ".qmlc")
+                    {
+                        DeleteFile(file);
+                    }
+                }
+                
+                RunShell("cd ./tmp && tar -cvzpf ../output/qt-5.12.2-linux-x64-runtime.tar.gz *");
+            });
+
+            Target("default", DependsOn("download", "extract", "package"));
             
             return Run(options);
         }
