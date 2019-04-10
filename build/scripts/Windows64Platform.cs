@@ -10,7 +10,7 @@ namespace Build
     {
         public string QtVersion => "5.12.2";
 
-        public string PlatformArch => "windows-64";
+        public string PlatformArch => "win-64";
         
         public string[] GetUrls()
         {

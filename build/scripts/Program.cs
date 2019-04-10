@@ -46,6 +46,14 @@ namespace Build
             var fullVersion = $"qt-{platform.QtVersion}-{platform.PlatformArch}-{sha}";
             Info($"Full version: {fullVersion}");
             
+            Target("clean", () =>
+            {
+                DeleteDirectory(ExpandPath("./tmp"));
+                DeleteDirectory(ExpandPath("./extracted"));
+                DeleteDirectory(ExpandPath("./output"));
+                DeleteDirectory(ExpandPath("./downloads"));
+            });
+            
             Target("download", () =>
             {
                 var downloadsDirectory = ExpandPath("./downloads");
