@@ -346,3 +346,7 @@ downloads/
 extracted/
 tmp/
 output/
+
+build/scripts/\.idea/\.idea\.Build/\.idea/
+
+build/scripts/\.idea/\.idea\.Build/

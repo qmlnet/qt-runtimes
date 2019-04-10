@@ -1,70 +1,22 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using static Bullseye.Targets;
 using static Build.Buildary.Directory;
 using static Build.Buildary.Path;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Runner;
-using static Build.Buildary.Runtime;
 using static Build.Buildary.Log;
 using static Build.Buildary.File;
-using static Build.Buildary.GitVersion;
 
 namespace Build
 {
     static class Program
     {
-        static List<string> GetLinuxUrls()
-        {
-            var gccBase = "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122/qt.qt5.5122.gcc_64/";
-
-            var urls = new List<string>
-            {
-                "5.12.2-0-201903121858icu-linux-Rhel7.2-x64.7z",
-                "5.12.2-0-201903121858qt3d-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtbase-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtcanvas3d-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtconnectivity-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtdeclarative-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtgamepad-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtgraphicaleffects-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtimageformats-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtlocation-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtmultimedia-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtquickcontrols-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtquickcontrols2-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtremoteobjects-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtscxml-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtsensors-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtserialbus-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtserialport-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtspeech-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtsvg-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qttools-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qttranslations-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtwayland-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtwebchannel-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtwebsockets-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtwebview-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtx11extras-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z",
-                "5.12.2-0-201903121858qtxmlpatterns-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z"
-            }.Select(x => gccBase + x).ToList();
-            
-            urls.Add("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122/qt.qt5.5122.qtvirtualkeyboard.gcc_64/5.12.2-0-201903121858qtvirtualkeyboard-Linux-RHEL_7_4-GCC-Linux-RHEL_7_4-X86_64.7z");
-
-            return urls;
-        }
-        
         static Task Main(string[] args)
         {
             var options = ParseOptions<Options>(args);
 
-            var linuxUrls = GetLinuxUrls();
+            IPlatform platform = new Linux64Platform();
             
             Target("download", () =>
             {
@@ -73,7 +25,7 @@ namespace Build
                 {
                     Directory.CreateDirectory(downloadsDirectory);
                 }
-                foreach (var remoteFileUrl in linuxUrls)
+                foreach (var remoteFileUrl in platform.GetUrls())
                 {
                     var fileName = Path.GetFileName(remoteFileUrl);
                     var downloadedFilePath = Path.Combine(downloadsDirectory, fileName);
@@ -93,7 +45,7 @@ namespace Build
                 {
                     Directory.CreateDirectory(extractedDirectory);
                 }
-                foreach (var remoteFileUrl in linuxUrls)
+                foreach (var remoteFileUrl in platform.GetUrls())
                 {
                     var downloadedFilePath = Path.Combine(ExpandPath("./downloads"), Path.GetFileName(remoteFileUrl));
                     Info($"Extracting: {downloadedFilePath}");
@@ -110,79 +62,21 @@ namespace Build
                     Directory.CreateDirectory(outputDirectory);
                 }
 
-                // Create a temporary directory and copy all of our extracted files to it.
                 if (DirectoryExists(ExpandPath("./tmp")))
                 {
                     DeleteDirectory(ExpandPath("./tmp"));
                 }
-                RunShell("cp -r ./extracted/5.12.2/gcc_64 ./tmp");
+                RunShell("cp -r ./extracted ./tmp");
                 
-                // Create a complete backup for dev purposes.
-                RunShell("cd ./tmp && tar -cvzpf ../output/qt-5.12.2-linux-x64-dev.tar.gz *");
+                platform.PackageDev(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev.tar.gz"));
                 
-                // Clean up the tmp directory in prep for a runtime 
-                // First get a list of all dependencies from every .so files.
-                var linkedFiles = new List<string>();
-                foreach(var file in GetFiles(ExpandPath("./tmp"), pattern:"*.so*", recursive:true))
+                if (DirectoryExists(ExpandPath("./tmp")))
                 {
-                    var lddOutput = ReadShell($"ldd {file}");
-                    foreach (var _line in lddOutput.Split(Environment.NewLine))
-                    {
-                        var line = _line.TrimStart('\t').TrimStart('\n');
-                        var match = Regex.Match(line, @"(.*) =>.*");
-                        if (match.Success)
-                        {
-                            var linkedFile = match.Groups[1].Value;
-                            if(!linkedFiles.Contains(linkedFile))
-                            {
-                                linkedFiles.Add(linkedFile);
-                            }
-                        }
-                    }
+                    DeleteDirectory(ExpandPath("./tmp"));
                 }
+                RunShell("cp -r ./extracted ./tmp");
                 
-                // Let's remove any file from lib/ that isn't linked against anything.
-                foreach(var file in GetFiles(ExpandPath("./tmp/lib"), recursive:true))
-                {
-                    var fileName = Path.GetFileName(file);
-                    if (!linkedFiles.Contains(fileName))
-                    {
-                        DeleteFile(file);
-                    }
-                }
-
-                foreach (var directory in GetDirecories(ExpandPath("./tmp"), recursive: true))
-                {
-                    if (!DirectoryExists(directory))
-                    {
-                        continue;
-                    }
-                    
-                    var directoryName = Path.GetFileName(directory);
-                    
-                    if (directoryName == "cmake")
-                    {
-                        DeleteDirectory(directory);
-                    }
-
-                    if (directoryName == "pkgconfig")
-                    {
-                        DeleteDirectory(directory);
-                    }
-                }
-                
-                foreach (var file in GetFiles(ExpandPath("./tmp"), recursive: true))
-                {
-                    var fileName = Path.GetFileName(file);
-                    var fileExtension = Path.GetExtension(fileName);
-                    
-                    if (fileExtension == ".qmlc")
-                    {
-                        DeleteFile(file);
-                    }
-                }
-                
-                RunShell("cd ./tmp && tar -cvzpf ../output/qt-5.12.2-linux-x64-runtime.tar.gz *");
+                platform.PackageRuntime(ExpandPath("./extracted"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev.tar.gz"));
             });
 
             Target("default", DependsOn("download", "extract", "package"));
