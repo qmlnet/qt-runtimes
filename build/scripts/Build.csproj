@@ -1,0 +1,3 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <Import Project="Buildary\Build.proj" />
+</Project>
