@@ -21,16 +21,18 @@ namespace Build
                 "qt.qt5.5122.qtvirtualkeyboard.clang_64");
         }
 
-        public void PackageDev(string extractedDirectory, string destination)
+        public void PackageDev(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "clang_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
         }
 
-        public void PackageRuntime(string extractedDirectory, string destination)
+        public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "clang_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             foreach (var directory in GetDirecories(extractedDirectory))
             {

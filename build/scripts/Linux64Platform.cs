@@ -21,16 +21,18 @@ namespace Build
                 "qt.qt5.5122.qtvirtualkeyboard.gcc_64");
         }
 
-        public void PackageDev(string extractedDirectory, string destination)
+        public void PackageDev(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "gcc_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
         }
 
-        public void PackageRuntime(string extractedDirectory, string destination)
+        public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "gcc_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             foreach (var directory in GetDirecories(extractedDirectory))
             {
@@ -68,7 +70,7 @@ namespace Build
             }
             
             // Let's remove any file from lib/ that isn't linked against anything.
-            foreach(var file in GetFiles(extractedDirectory, recursive:true))
+            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "lib"), recursive:true))
             {
                 var fileName = Path.GetFileName(file);
                 if (!linkedFiles.Contains(fileName))

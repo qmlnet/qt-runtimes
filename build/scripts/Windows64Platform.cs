@@ -19,16 +19,18 @@ namespace Build
                 "qt.qt5.5122.qtvirtualkeyboard.win64_msvc2017_64");
         }
 
-        public void PackageDev(string extractedDirectory, string destination)
+        public void PackageDev(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "msvc2017_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
         }
 
-        public void PackageRuntime(string extractedDirectory, string destination)
+        public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
             extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "msvc2017_64");
+            File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             foreach (var directory in GetDirecories(extractedDirectory))
             {

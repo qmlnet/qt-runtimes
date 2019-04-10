@@ -8,8 +8,8 @@ namespace Build
         
         string[] GetUrls();
 
-        void PackageDev(string extractedDirectory, string destination);
+        void PackageDev(string extractedDirectory, string destination, string version);
 
-        void PackageRuntime(string extractedDirectory, string destination);
+        void PackageRuntime(string extractedDirectory, string destination, string version);
     }
 }

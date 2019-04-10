@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using static Bullseye.Targets;
@@ -19,8 +20,31 @@ namespace Build
             var sha = ReadShell("git rev-parse --short HEAD").TrimEnd(Environment.NewLine.ToCharArray());
             
             Info($"Sha: {sha}");
+
+            var platforms = new Dictionary<string, IPlatform>
+            {
+                { "linux-64", new Linux64Platform() },
+                { "osx-64", new OSX64Platform() },
+                { "win-64", new Windows64Platform() }
+            };
+
+            if (string.IsNullOrEmpty(options.Platform))
+            {
+                Failure("You must provide a platform.");
+                Environment.Exit(1);
+            }
             
-            IPlatform platform = new OSX64Platform();
+            if (!platforms.ContainsKey(options.Platform))
+            {
+                Failure($"No platform exists for {options.Platform}");
+                Environment.Exit(1);
+            }
+
+            var platform = platforms[options.Platform];
+            
+            
+            var fullVersion = $"qt-{platform.QtVersion}-{platform.PlatformArch}-{sha}";
+            Info($"Full version: {fullVersion}");
             
             Target("download", () =>
             {
@@ -74,7 +98,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageDev(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"));
+                platform.PackageDev(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"), fullVersion);
                 
                 if (DirectoryExists(ExpandPath("./tmp")))
                 {
@@ -82,7 +106,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"));
+                platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"), fullVersion);
             });
 
             Target("default", DependsOn("download", "extract", "package"));
@@ -94,6 +118,8 @@ namespace Build
         class Options : RunnerOptions
         // ReSharper restore ClassNeverInstantiated.Local
         {
+            [PowerArgs.ArgDefaultValue("linux-64")]
+            public string Platform { get; set; }
         }
     }
 }
