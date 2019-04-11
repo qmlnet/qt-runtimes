@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Directory;
@@ -16,14 +17,22 @@ namespace Build
 
         public string[] GetUrls()
         {
-            return Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5122/",
-                "qt.qt5.5122.clang_64",
-                "qt.qt5.5122.qtvirtualkeyboard.clang_64");
+            var urls = Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5122",
+                    "qt.qt5.5122.clang_64",
+                    "qt.qt5.5122.qtvirtualkeyboard.clang_64")
+                .ToList();
+            
+            urls.AddRange(Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/tools_qtcreator",
+                "qt.tools.qtcreator"));
+
+            return urls.ToArray();
         }
 
         public void PackageDev(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "clang_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/clang_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
@@ -31,10 +40,13 @@ namespace Build
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "clang_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/clang_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
-            foreach (var directory in GetDirecories(extractedDirectory))
+            DeleteDirectory(Path.Combine(extractedDirectory, "Qt Creator.app"));
+            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
@@ -48,7 +60,7 @@ namespace Build
                 }
             }
             
-            foreach (var directory in GetDirecories(extractedDirectory, recursive:true))
+            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt"), recursive:true))
             {
                 if (!DirectoryExists(directory))
                 {
@@ -80,7 +92,7 @@ namespace Build
                 }
             }
             
-            foreach (var file in GetFiles(extractedDirectory, recursive:true))
+            foreach (var file in GetFiles(Path.Combine(extractedDirectory, "qt"), recursive:true))
             {
                 var extension = Path.GetExtension(file);
                 var fileName = Path.GetFileNameWithoutExtension(file);

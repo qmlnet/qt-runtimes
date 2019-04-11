@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Directory;
@@ -16,14 +17,22 @@ namespace Build
 
         public string[] GetUrls()
         {
-            return Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122",
-                "qt.qt5.5122.gcc_64",
-                "qt.qt5.5122.qtvirtualkeyboard.gcc_64");
+            var urls = Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122",
+                    "qt.qt5.5122.gcc_64",
+                    "qt.qt5.5122.qtvirtualkeyboard.gcc_64")
+                .ToList();
+            
+            urls.AddRange(Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/tools_qtcreator",
+                    "qt.tools.qtcreator"));
+
+            return urls.ToArray();
         }
 
         public void PackageDev(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "gcc_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/gcc_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
@@ -31,10 +40,13 @@ namespace Build
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "gcc_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/gcc_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
-            foreach (var directory in GetDirecories(extractedDirectory))
+            DeleteDirectory(Path.Combine(extractedDirectory, "Tools"));
+            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
@@ -51,7 +63,7 @@ namespace Build
             // Clean up the tmp directory in prep for a runtime 
             // First get a list of all dependencies from every .so files.
             var linkedFiles = new List<string>();
-            foreach(var file in GetFiles(extractedDirectory, pattern:"*.so*", recursive:true))
+            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "qt"), pattern:"*.so*", recursive:true))
             {
                 var lddOutput = ReadShell($"ldd {file}");
                 foreach (var _line in lddOutput.Split(Environment.NewLine))
@@ -70,7 +82,7 @@ namespace Build
             }
             
             // Let's remove any file from lib/ that isn't linked against anything.
-            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "lib"), recursive:true))
+            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "qt", "lib"), recursive:true))
             {
                 var fileName = Path.GetFileName(file);
                 if (!linkedFiles.Contains(fileName))
@@ -79,7 +91,7 @@ namespace Build
                 }
             }
 
-            foreach (var directory in GetDirecories(extractedDirectory, recursive: true))
+            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt"), recursive: true))
             {
                 if (!DirectoryExists(directory))
                 {
@@ -99,7 +111,7 @@ namespace Build
                 }
             }
             
-            foreach (var file in GetFiles(extractedDirectory, recursive: true))
+            foreach (var file in GetFiles(Path.Combine(extractedDirectory, "qt"), recursive: true))
             {
                 var fileName = Path.GetFileName(file);
                 var fileExtension = Path.GetExtension(fileName);

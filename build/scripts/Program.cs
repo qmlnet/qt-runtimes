@@ -51,7 +51,6 @@ namespace Build
                 DeleteDirectory(ExpandPath("./tmp"));
                 DeleteDirectory(ExpandPath("./extracted"));
                 DeleteDirectory(ExpandPath("./output"));
-                DeleteDirectory(ExpandPath("./downloads"));
             });
             
             Target("download", () =>
@@ -117,7 +116,7 @@ namespace Build
                 platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"), fullVersion);
             });
 
-            Target("default", DependsOn("download", "extract", "package"));
+            Target("default", DependsOn("clean", "download", "extract", "package"));
             
             return Run(options);
         }
