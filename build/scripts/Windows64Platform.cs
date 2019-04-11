@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Directory;
 using static Build.Buildary.File;
@@ -14,14 +15,24 @@ namespace Build
         
         public string[] GetUrls()
         {
-            return Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_5122",
-                "qt.qt5.5122.win64_msvc2017_64",
-                "qt.qt5.5122.qtvirtualkeyboard.win64_msvc2017_64");
+            var urls = Helpers.GetQtArchives(
+                    "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_5122",
+                    "qt.qt5.5122.win64_msvc2017_64",
+                    "qt.qt5.5122.qtvirtualkeyboard.win64_msvc2017_64")
+                .ToList();
+            
+            urls.AddRange(Helpers.GetQtArchives(
+                "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_qtcreator",
+                "qt.tools.qtcreator"));
+
+            return urls.ToArray();
         }
 
         public void PackageDev(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "msvc2017_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/msvc2017_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
@@ -29,10 +40,13 @@ namespace Build
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
-            extractedDirectory = Path.Combine(extractedDirectory, QtVersion, "msvc2017_64");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/msvc2017_64\" \"{extractedDirectory}/qt\"");
+            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
-            foreach (var directory in GetDirecories(extractedDirectory))
+            DeleteDirectory(Path.Combine(extractedDirectory, "Tools"));
+            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
@@ -57,7 +71,7 @@ namespace Build
             
             // The windows build currently brings in all the .dll's for packaging.
             // However, it also brings in the *d.dll/*.pdb files. Let's remove them.
-            foreach(var file in GetFiles(extractedDirectory, recursive:true))
+            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "qt"), recursive:true))
             {
                 if (file.EndsWith("d.dll"))
                 {
