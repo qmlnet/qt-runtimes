@@ -43,15 +43,21 @@ namespace Build
             var platform = platforms[options.Platform];
             
             
-            var fullVersion = $"qt-{platform.QtVersion}-{platform.PlatformArch}-{sha}";
+            var fullVersion = $"qt-{platform.QtVersion}-{sha}-{platform.PlatformArch}";
             Info($"Full version: {fullVersion}");
             
             Target("clean", () =>
             {
-                DeleteDirectory(ExpandPath("./tmp"));
-                DeleteDirectory(ExpandPath("./extracted"));
-                DeleteDirectory(ExpandPath("./output"));
+                if(DirectoryExists(ExpandPath("./tmp")))
+                    DeleteDirectory(ExpandPath("./tmp"));
+                if(DirectoryExists(ExpandPath("./extracted")))
+                    DeleteDirectory(ExpandPath("./extracted"));
             });
+
+            string ConvertRemoteUrlToLocalFilePath(string url)
+            {
+                return url.Replace(":", "").Replace("/", "");
+            }
             
             Target("download", () =>
             {
@@ -62,8 +68,7 @@ namespace Build
                 }
                 foreach (var remoteFileUrl in platform.GetUrls())
                 {
-                    var fileName = Path.GetFileName(remoteFileUrl);
-                    var downloadedFilePath = Path.Combine(downloadsDirectory, fileName);
+                    var downloadedFilePath = Path.Combine(downloadsDirectory, ConvertRemoteUrlToLocalFilePath(remoteFileUrl));
                     if (FileExists(downloadedFilePath))
                     {
                         continue;
@@ -84,7 +89,7 @@ namespace Build
                 
                 foreach (var remoteFileUrl in platform.GetUrls())
                 {
-                    var downloadedFilePath = Path.Combine(ExpandPath("./downloads"), Path.GetFileName(remoteFileUrl));
+                    var downloadedFilePath = Path.Combine(ExpandPath("./downloads"), ConvertRemoteUrlToLocalFilePath(remoteFileUrl));
                     Info($"Extracting: {downloadedFilePath}");
                     RunShell($"cd \"{extractedDirectory}\" && 7za x {downloadedFilePath} -aoa");
                 }
@@ -105,7 +110,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageDev(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-dev-{sha}.tar.gz"), fullVersion);
+                platform.PackageDev(ExpandPath("./tmp"), ExpandPath($"./output/{fullVersion}-dev.tar.gz"), fullVersion);
                 
                 if (DirectoryExists(ExpandPath("./tmp")))
                 {
@@ -113,7 +118,7 @@ namespace Build
                 }
                 RunShell("cp -r ./extracted ./tmp");
                 
-                platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/qt-{platform.QtVersion}-{platform.PlatformArch}-runtime-{sha}.tar.gz"), fullVersion);
+                platform.PackageRuntime(ExpandPath("./tmp"), ExpandPath($"./output/{fullVersion}-runtime.tar.gz"), fullVersion);
             });
 
             Target("default", DependsOn("clean", "download", "extract", "package"));
