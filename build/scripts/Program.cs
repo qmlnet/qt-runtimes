@@ -23,9 +23,9 @@ namespace Build
 
             var platforms = new Dictionary<string, IPlatform>
             {
-                { "linux-64", new Linux64Platform() },
-                { "osx-64", new OSX64Platform() },
-                { "win-64", new Windows64Platform() }
+                { "linux-x64", new Linux64Platform() },
+                { "osx-x64", new OSX64Platform() },
+                { "win-x64", new Windows64Platform() }
             };
 
             if (string.IsNullOrEmpty(options.Platform))
