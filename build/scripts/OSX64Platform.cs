@@ -28,10 +28,33 @@ namespace Build
             return urls.ToArray();
         }
 
-        public void PackageDev(string extractedDirectory, string destination, string version)
+        private void Patch(string extractedDirectory)
         {
             RunShell($"mv \"{extractedDirectory}/{QtVersion}/clang_64\" \"{extractedDirectory}/qt\"");
             DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            
+            using (var fileStream = File.OpenWrite(Path.Combine(extractedDirectory, "qt", "bin", "qt.conf")))
+            {
+                using (var streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.WriteLine("[Paths]");
+                    streamWriter.WriteLine("Prefix=..");
+                }
+            }
+            
+            using(var fileStream = File.Open(Path.Combine(extractedDirectory, "qt", "mkspecs", "qconfig.pri"), FileMode.Append))
+            {
+                using (var streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.WriteLine("QT_EDITION = OpenSource");
+                    streamWriter.WriteLine("QT_LICHECK =");
+                }
+            }
+        }
+
+        public void PackageDev(string extractedDirectory, string destination, string version)
+        {
+            Patch(extractedDirectory);
             
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
@@ -40,8 +63,7 @@ namespace Build
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
         {
-            RunShell($"mv \"{extractedDirectory}/{QtVersion}/clang_64\" \"{extractedDirectory}/qt\"");
-            DeleteDirectory($"{extractedDirectory}/{QtVersion}");
+            Patch(extractedDirectory);
             
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
