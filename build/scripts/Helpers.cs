@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Xml.Serialization;
 using Build.Xml;
+using static Build.Buildary.Shell;
 
 namespace Build
 {
@@ -51,6 +52,18 @@ namespace Build
             }
             
             return result.ToArray();
+        }
+
+        public static void AssertValidSymlinks(string directory)
+        {
+            var output = ReadShell($"find \"{directory}\" -type l ! -exec test -e {{}} \\; -print")
+                .Split(Environment.NewLine)
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToList();
+            if (output.Count > 0)
+            {
+                throw new Exception($"Invalid symlinks: {string.Join(", ", output)}");
+            }
         }
     }
 }

@@ -55,7 +55,8 @@ namespace Build
             Patch(extractedDirectory);
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
-            RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
+            Helpers.AssertValidSymlinks(extractedDirectory);
+            RunShell($"cd \"{extractedDirectory}\" && tar -czpf \"{destination}\" *");
         }
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
@@ -108,8 +109,9 @@ namespace Build
                     DeleteFile(file);
                 }
             }
-            
-            RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
+
+            Helpers.AssertValidSymlinks(extractedDirectory);
+            RunShell($"cd \"{extractedDirectory}\" && tar -czpf \"{destination}\" *");
         }
     }
 }

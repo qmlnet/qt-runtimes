@@ -58,7 +58,8 @@ namespace Build
             
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
-            RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
+            Helpers.AssertValidSymlinks(extractedDirectory);
+            RunShell($"cd \"{extractedDirectory}\" && tar -czpf \"{destination}\" *");
         }
 
         public void PackageRuntime(string extractedDirectory, string destination, string version)
@@ -68,6 +69,8 @@ namespace Build
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             DeleteDirectory(Path.Combine(extractedDirectory, "Tools"));
+            DeleteDirectory(Path.Combine(extractedDirectory, "qt", "lib", "cmake"));
+            DeleteDirectory(Path.Combine(extractedDirectory, "qt", "lib", "pkgconfig"));
             foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
@@ -82,57 +85,6 @@ namespace Build
                 }
             }
             
-            // Clean up the tmp directory in prep for a runtime 
-            // First get a list of all dependencies from every .so files.
-            var linkedFiles = new List<string>();
-            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "qt"), pattern:"*.so*", recursive:true))
-            {
-                var lddOutput = ReadShell($"ldd {file}");
-                foreach (var _line in lddOutput.Split(Environment.NewLine))
-                {
-                    var line = _line.TrimStart('\t').TrimStart('\n');
-                    var match = Regex.Match(line, @"(.*) =>.*");
-                    if (match.Success)
-                    {
-                        var linkedFile = match.Groups[1].Value;
-                        if(!linkedFiles.Contains(linkedFile))
-                        {
-                            linkedFiles.Add(linkedFile);
-                        }
-                    }
-                }
-            }
-            
-            // Let's remove any file from lib/ that isn't linked against anything.
-            foreach(var file in GetFiles(Path.Combine(extractedDirectory, "qt", "lib"), recursive:true))
-            {
-                var fileName = Path.GetFileName(file);
-                if (!linkedFiles.Contains(fileName))
-                {
-                    DeleteFile(file);
-                }
-            }
-
-            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt"), recursive: true))
-            {
-                if (!DirectoryExists(directory))
-                {
-                    continue;
-                }
-                
-                var directoryName = Path.GetFileName(directory);
-                
-                if (directoryName == "cmake")
-                {
-                    DeleteDirectory(directory);
-                }
-
-                if (directoryName == "pkgconfig")
-                {
-                    DeleteDirectory(directory);
-                }
-            }
-            
             foreach (var file in GetFiles(Path.Combine(extractedDirectory, "qt"), recursive: true))
             {
                 var fileName = Path.GetFileName(file);
@@ -142,9 +94,25 @@ namespace Build
                 {
                     DeleteFile(file);
                 }
+
+                if (fileExtension == ".la")
+                {
+                    DeleteFile(file);
+                }
+
+                if (fileExtension == ".prl")
+                {
+                    DeleteFile(file);
+                }
+
+                if (fileExtension == ".a")
+                {
+                    DeleteFile(file);
+                }
             }
             
-            RunShell($"cd \"{extractedDirectory}\" && tar -cvzpf \"{destination}\" *");
+            Helpers.AssertValidSymlinks(extractedDirectory);
+            RunShell($"cd \"{extractedDirectory}\" && tar -czpf \"{destination}\" *");
         }
     }
 }
