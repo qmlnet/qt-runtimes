@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Text;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Directory;
 using static Build.Buildary.File;
@@ -48,6 +49,16 @@ namespace Build
                     streamWriter.WriteLine("QT_LICHECK =");
                 }
             }
+            
+            // These are libraries that need to be loaded first, before loading QmlNet.dll.
+            // It is used by the RuntimeManager when manually loading a Qt environment.
+            var preLoadText = new StringBuilder();
+            preLoadText.AppendLine("Qt5QuickControls2.dll");
+            preLoadText.AppendLine("Qt5Widgets.dll");
+            preLoadText.AppendLine("Qt5Gui.dll");
+            preLoadText.AppendLine("Qt5Qml.dll");
+            preLoadText.AppendLine("Qt5Core.dll");
+            File.WriteAllText(Path.Combine(extractedDirectory, "qt", "bin", "preload.txt"), preLoadText.ToString());
         }
         
         public void PackageDev(string extractedDirectory, string destination, string version)

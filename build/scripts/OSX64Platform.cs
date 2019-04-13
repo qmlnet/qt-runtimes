@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using static Build.Buildary.Shell;
 using static Build.Buildary.Directory;
@@ -50,6 +51,19 @@ namespace Build
                     streamWriter.WriteLine("QT_LICHECK =");
                 }
             }
+            
+            // These are libraries that need to be loaded first, before loading libQmlNet.so.
+            // It is used by the RuntimeManager when manually loading a Qt environment.
+            var preLoadText = new StringBuilder();
+            preLoadText.AppendLine("QtQuickControls2.framework/Versions/5/QtQuickControls2");
+            preLoadText.AppendLine("QtQuick.framework/Versions/5/QtQuick");
+            preLoadText.AppendLine("QtWidgets.framework/Versions/5/QtWidgets");
+            preLoadText.AppendLine("QtGui.framework/Versions/5/QtGui");
+            preLoadText.AppendLine("QtQml.framework/Versions/5/QtQml");
+            preLoadText.AppendLine("QtNetwork.framework/Versions/5/QtNetwork");
+            preLoadText.AppendLine("QtTest.framework/Versions/5/QtTest");
+            preLoadText.AppendLine("QtCore.framework/Versions/5/QtCore");
+            File.WriteAllText(Path.Combine(extractedDirectory, "qt", "lib", "preload.txt"), preLoadText.ToString());
         }
 
         public void PackageDev(string extractedDirectory, string destination, string version)
