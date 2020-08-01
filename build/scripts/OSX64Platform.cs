@@ -12,15 +12,15 @@ namespace Build
 {
     public class OSX64Platform : IPlatform
     {
-        public string QtVersion => "5.12.2";
+        public string QtVersion => Helpers.QtVersion;
 
         public string PlatformArch => "osx-x64";
 
         public string[] GetUrls()
         {
-            var urls = Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt5_5122",
-                    "qt.qt5.5122.clang_64",
-                    "qt.qt5.5122.qtvirtualkeyboard.clang_64")
+            var urls = Helpers.GetQtArchives($"https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/{Helpers.QtVersionURL}",
+                    $"{Helpers.QtVersionURLWithDot}.clang_64",
+                    $"{Helpers.QtVersionURLWithDot}.qtvirtualkeyboard.clang_64")
                 .ToList();
             
             urls.AddRange(Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/tools_qtcreator",

@@ -12,6 +12,9 @@ namespace Build
 {
     public class Helpers
     {
+        public static string QtVersion => "5.15.1";
+        public static string QtVersionURL => "qt5_5151";
+        public static string QtVersionURLWithDot => "qt.qt5.5151";
         public static string GetResponse(string url)
         {
             using (var client = new HttpClient())
