@@ -9,16 +9,16 @@ namespace Build
 {
     public class Windows64Platform : IPlatform
     {
-        public string QtVersion => "5.12.2";
+        public string QtVersion => Helpers.QtVersion;
 
         public string PlatformArch => "win-x64";
         
         public string[] GetUrls()
         {
             var urls = Helpers.GetQtArchives(
-                    "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_5122",
-                    "qt.qt5.5122.win64_msvc2017_64",
-                    "qt.qt5.5122.qtvirtualkeyboard.win64_msvc2017_64")
+                    $"https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/{Helpers.QtVersionURL}",
+                    $"{Helpers.QtVersionURLWithDot}.win64_msvc2017_64",
+                    $"{Helpers.QtVersionURLWithDot}.qtvirtualkeyboard.win64_msvc2017_64")
                 .ToList();
             
             urls.AddRange(Helpers.GetQtArchives(

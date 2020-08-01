@@ -12,15 +12,15 @@ namespace Build
 {
     public class Linux64Platform : IPlatform
     {
-        public string QtVersion => "5.12.2";
+        public string QtVersion => Helpers.QtVersion;
 
         public string PlatformArch => "linux-x64";
 
         public string[] GetUrls()
         {
-            var urls = Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt5_5122",
-                    "qt.qt5.5122.gcc_64",
-                    "qt.qt5.5122.qtvirtualkeyboard.gcc_64")
+            var urls = Helpers.GetQtArchives($"https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/{Helpers.QtVersionURL}",
+                    $"{Helpers.QtVersionURLWithDot}.gcc_64",
+                    $"{Helpers.QtVersionURLWithDot}.qtvirtualkeyboard.gcc_64")
                 .ToList();
             
             urls.AddRange(Helpers.GetQtArchives("https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/tools_qtcreator",
