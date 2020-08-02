@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
+using Build.Buildary;
+using CommandLine;
 using static Bullseye.Targets;
 using static Build.Buildary.Directory;
 using static Build.Buildary.Path;
@@ -9,12 +10,14 @@ using static Build.Buildary.Shell;
 using static Build.Buildary.Runner;
 using static Build.Buildary.Log;
 using static Build.Buildary.File;
+using Directory = System.IO.Directory;
+using Path = System.IO.Path;
 
 namespace Build
 {
     static class Program
     {
-        static Task Main(string[] args)
+        static void Main(string[] args)
         {
             var options = ParseOptions<Options>(args);
             var sha = ReadShell("git rev-parse --short HEAD").TrimEnd(Environment.NewLine.ToCharArray());
@@ -123,14 +126,14 @@ namespace Build
 
             Target("default", DependsOn("clean", "download", "extract", "package"));
             
-            return Run(options);
+            Execute(options);
         }
 
         // ReSharper disable ClassNeverInstantiated.Local
         class Options : RunnerOptions
         // ReSharper restore ClassNeverInstantiated.Local
         {
-            [PowerArgs.ArgDefaultValue("linux-64")]
+            [Option('p', "platform", HelpText = "The platform.", Default = "linux-x64")]
             public string Platform { get; set; }
         }
     }

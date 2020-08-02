@@ -83,7 +83,7 @@ namespace Build
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             DeleteDirectory(Path.Combine(extractedDirectory, "Qt Creator.app"));
-            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
+            foreach (var directory in GetDirectories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
@@ -97,7 +97,7 @@ namespace Build
                 }
             }
             
-            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt"), recursive:true))
+            foreach (var directory in GetDirectories(Path.Combine(extractedDirectory, "qt"), recursive:true))
             {
                 if (!DirectoryExists(directory))
                 {

@@ -82,7 +82,7 @@ namespace Build
             DeleteDirectory(Path.Combine(extractedDirectory, "Tools"));
             DeleteDirectory(Path.Combine(extractedDirectory, "qt", "lib", "cmake"));
             DeleteDirectory(Path.Combine(extractedDirectory, "qt", "lib", "pkgconfig"));
-            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
+            foreach (var directory in GetDirectories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
