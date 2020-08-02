@@ -17,8 +17,8 @@ namespace Build
         {
             var urls = Helpers.GetQtArchives(
                     $"https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/{Helpers.QtVersionURL}",
-                    $"{Helpers.QtVersionURLWithDot}.win64_msvc2017_64",
-                    $"{Helpers.QtVersionURLWithDot}.qtvirtualkeyboard.win64_msvc2017_64")
+                    $"{Helpers.QtVersionURLWithDot}.win64_msvc2019_64",
+                    $"{Helpers.QtVersionURLWithDot}.qtvirtualkeyboard.win64_msvc2019_64")
                 .ToList();
             
             urls.AddRange(Helpers.GetQtArchives(
@@ -30,7 +30,7 @@ namespace Build
 
         private void Patch(string extractedDirectory)
         {
-            RunShell($"mv \"{extractedDirectory}/{QtVersion}/msvc2017_64\" \"{extractedDirectory}/qt\"");
+            RunShell($"mv \"{extractedDirectory}/{QtVersion}/msvc2019_64\" \"{extractedDirectory}/qt\"");
             DeleteDirectory($"{extractedDirectory}/{QtVersion}");
             using (var fileStream = File.OpenWrite(Path.Combine(extractedDirectory, "qt", "bin", "qt.conf")))
             {
@@ -76,7 +76,7 @@ namespace Build
             File.WriteAllText(Path.Combine(extractedDirectory, "version.txt"), version);
             
             DeleteDirectory(Path.Combine(extractedDirectory, "Tools"));
-            foreach (var directory in GetDirecories(Path.Combine(extractedDirectory, "qt")))
+            foreach (var directory in GetDirectories(Path.Combine(extractedDirectory, "qt")))
             {
                 switch (Path.GetFileName(directory))
                 {
